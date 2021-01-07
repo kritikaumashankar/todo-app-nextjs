@@ -1,65 +1,121 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router'; 
+import fetch from 'isomorphic-unfetch';
 
-export default function Home() {
+const Index =({todos})=>{ 
+  const [form, setForm] = useState({ id: undefined,title:'', isComplete: false});
+  const router = useRouter();
+
+  const handleChange = (e) =>{
+    
+      setForm({
+        ...form,
+        [e.target.name]: e.target.value
+      })
+    
+    }
+  
+
+  const handleSubmit =(e) =>{ 
+    e.preventDefault();
+      console.log("submitting yes create todo")
+      console
+      createTodo();
+      setForm({id:0,title:'',isComplete:false})
+  }
+
+  const handleComplete =(e)=>{
+    console.log("inside handleComplete,id:", e.target.id)
+      setForm({
+        id: e.target.id,
+        title: "",
+        isComplete:true
+      })
+    
+  }
+const createTodo = async() => {
+  try{
+    const res = await fetch('http://localhost:3000/api/todos',{
+      method: 'POST',
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body:  JSON.stringify(form)
+    });
+    router.push('/');
+    
+  }catch(error){
+    console.log(error);
+  }
+}
+
+const editTodo = async () =>{
+  try {
+    console.log("form inside editTodo", form)
+    const res = await fetch(`http://localhost:3000/api/todos/`,{
+      method : "PUT",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body:  JSON.stringify(form)
+    });
+    router.push('/');
+  } catch (error) {
+    console.log(error);
+  }
+}
+console.log(todos)
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <div className="conatiner">
+      <form onSubmit={handleSubmit}>
+        <div>
+          <span>New Todo</span> <br/>
+            <div className="form-group">
+              <input 
+              required
+                type="text" className="form-control"  name="title" placeholder="Add todo" value={form.title} onChange={handleSubmit} />
+              <button type="submit"> + </button>
+            </div>
+            </div>
+        <table className="table table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Complete?</th>
+              <th scope="col">Todos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(todos).map(todo => {
+              if(todo[1] !== null) {
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+                return(
+                  <tr className="table-light" key={todo[1].id}>
+                  <td>
+                      <input 
+                        type="checkbox" className="custom-control-input" id={todo[1].id} name="isComplete"  onChange={handleComplete}/>
+                      <span>{todo[1].title}</span>
+                    </td>
+                  </tr>
+              )       
+              }else{
+                return(
+                  <tr className="table-light">
+                  </tr>
+                )
+              }
+            })} 
+          </tbody>
+        </table>
+      </form>
     </div>
   )
 }
+
+Index.getInitialProps = async () => {
+  const res = await fetch('http://localhost:3000/api/todos')
+  const { data } = await res.json();
+  return { todos: data };
+}
+export default Index;
