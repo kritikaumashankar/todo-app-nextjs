@@ -4,35 +4,41 @@ import fetch from 'isomorphic-unfetch';
 
 const Index =({todos})=>{ 
   const [form, setForm] = useState({ id: undefined,title:'', isComplete: false});
+  const [isEditted, setIsEditted] = useState(false);
   const router = useRouter();
 
+  useEffect(()=>{
+    if(isEditted){
+      editTodo();
+      setForm({id:undefined,title:'',isComplete:false})
+      setIsEditted(false);
+    }
+  },[isEditted])
   const handleChange = (e) =>{
-    
       setForm({
         ...form,
         [e.target.name]: e.target.value
       })
-    
     }
   
 
   const handleSubmit =(e) =>{ 
     e.preventDefault();
-      console.log("submitting yes create todo")
-      console
-      createTodo();
-      setForm({id:0,title:'',isComplete:false})
+        createTodo();
+        setForm({id:undefined,title:'',isComplete:false})
   }
 
   const handleComplete =(e)=>{
-    console.log("inside handleComplete,id:", e.target.id)
-      setForm({
-        id: e.target.id,
-        title: "",
-        isComplete:true
-      })
-    
+    setForm({
+      id: parseInt(e.target.id),
+      title:"",
+      isComplete:true
+    })
+    setIsEditted(true);
   }
+
+
+
 const createTodo = async() => {
   try{
     const res = await fetch('http://localhost:3000/api/todos',{
@@ -50,11 +56,10 @@ const createTodo = async() => {
   }
 }
 
-const editTodo = async () =>{
+const editTodo = async() =>{
   try {
-    console.log("form inside editTodo", form)
     const res = await fetch(`http://localhost:3000/api/todos/`,{
-      method : "PUT",
+      method : 'PUT',
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json"
@@ -66,18 +71,16 @@ const editTodo = async () =>{
     console.log(error);
   }
 }
-console.log(todos)
+
   return (
-    <div className="conatiner">
+    <div className="container">
       <form onSubmit={handleSubmit}>
-        <div>
-          <span>New Todo</span> <br/>
+          <h4>New Todo</h4>
             <div className="form-group">
               <input 
               required
-                type="text" className="form-control"  name="title" placeholder="Add todo" value={form.title} onChange={handleSubmit} />
+                type="text" className="form-control"  name="title" placeholder="Add todo" value={form.title} onChange={handleChange} />
               <button type="submit"> + </button>
-            </div>
             </div>
         <table className="table table-hover">
           <thead>
@@ -88,23 +91,15 @@ console.log(todos)
           </thead>
           <tbody>
             {Object.entries(todos).map(todo => {
-              if(todo[1] !== null) {
-
                 return(
                   <tr className="table-light" key={todo[1].id}>
-                  <td>
+                    <td>
                       <input 
-                        type="checkbox" className="custom-control-input" id={todo[1].id} name="isComplete"  onChange={handleComplete}/>
-                      <span>{todo[1].title}</span>
+                        type="checkbox" className="form-check-input" id={todo[1].id} name="isComplete" value={todo[1].isComplete} onChange={handleComplete}/></td>
+                    <td><span>{todo[1].title}</span>
                     </td>
                   </tr>
               )       
-              }else{
-                return(
-                  <tr className="table-light">
-                  </tr>
-                )
-              }
             })} 
           </tbody>
         </table>

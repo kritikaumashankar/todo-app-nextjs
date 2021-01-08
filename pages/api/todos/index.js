@@ -1,12 +1,10 @@
 const fs = require('fs');
-const todos = require("../../../todos")
+let todos = require("../../../todos")
 
 export default async(req,res) => {
-
   const { method } = req;
-  let idCount = todos.length;
+  let idCount = todos.length!==0 ? todos[todos.length-1].id : 0  ;
 
-  console.log("inside api/todos/index",req.body.id)
   let todo ={
     id: req.body.id == undefined ? ++idCount : req.body.id,
     title: req.body.title,
@@ -23,7 +21,6 @@ export default async(req,res) => {
           }
           try{
             res = JSON.parse(todos);
-            console.log(res)
           }catch(err){
             return res.status(400).json({success:true, err:err});;
           }
@@ -54,8 +51,7 @@ export default async(req,res) => {
     case 'PUT':
       try {
         //delete todos[todo.id -1];
-        todos.splice(todo.id -1 ,1);
-        console.log(todos);
+        todos = todos.filter(td=> td.id!==todo.id);
       fs.writeFile('todos.json', JSON.stringify(todos), (err) => {
               if (err) console.log('Error writing file:', err)
           })
@@ -63,6 +59,7 @@ export default async(req,res) => {
       return res.status(200).json({success:true});
       } catch (error) {
         res.status(400).json({ success: false, err: error});
+        console.log(error)
       }
       break;
     
